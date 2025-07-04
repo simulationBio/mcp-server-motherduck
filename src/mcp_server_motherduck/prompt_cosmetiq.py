@@ -44,18 +44,80 @@ WHERE  schema_name = 'irritation'
 Run a similar query for every table you plan to analyse before writing the main SQL.
 
 ────────────────────────────────────────
-3. SPECIAL CASE – 5-COLUMN “EFFECT” TABLES
+3. LOW LEVEL DATA OVERVIEW
 ────────────────────────────────────────
 
-rec_id | change_value | change_sentiment | duration_value | duration_sentiment
-change_value = very_decreased∣decreased∣no_change∣increased∣very_increased∣unspecified
+## application_and_effects – post-use behaviour & outcomes
 
-no_change = reviewer explicitly says “this did not change”.
+Purpose. Captures how each product was used and what the skin did in response, as self-reported by the reviewer.
 
-unspecified = attribute never mentioned.
+Structure.
 
-duration_value = instant → very_long ∣ unspecified (pairs with duration_sentiment).
-Always interpret change & duration as perceived after using the product.
+main.application – one row per review with usage horizon, frequency, routine moment, tool, absorption speed.
+
+Thematic schemas mirroring dermatological concerns:<br>
+acne • anti_age • cleansing • hydration • irritation • pigmentation • protection • scarring • sebum_pores • sensory
+– each schema contains 1-N 5-column effect tables (change_value, change_sentiment, duration_value, duration_sentiment, plus rec_id / cosmetiq_review_id).
+
+Join key. cosmetiq_review_id (also rec_id for legacy compatibility).
+
+Interpretation. All changes are post-application perceptions. no_change → reviewer explicitly states “nothing changed”; unspecified means the attribute was never mentioned.
+
+
+## mappings – master ID registry
+Why it exists. Turns messy, source-specific IDs into the single keys the rest of the lake uses.
+
+Tables.
+
+main.product_map (source, raw_product_id → cosmetiq_product_id)
+
+main.review_map (source, raw_review_id → cosmetiq_review_id)
+
+Use it to:
+
+translate a shop’s product code into cosmetiq_product_id;
+
+translate a crawler’s review code into cosmetiq_review_id;
+then join across any other database.
+
+## products – SKU-level catalog data
+What it stores. Static attributes scraped per SKU: brand, category trail, INCI, price, claims, etc.
+
+Source-specific tables.
+
+main.sephora-it  – Italian Sephora catalogue
+
+main.oliveyoung-com – OliveYoung Korea catalogue
+
+Key column. Every row already carries its cosmetiq_product_id (copied from product_map) so you can join straight to reviews or effects.
+
+## reviews – raw user submissions
+Content. Untouched review fields exactly as entered on the retailer site (stars, title, free-text body, badge, timestamps…).
+
+Current table. main.sephora_it_skincare_reviews – 80 k+ Italian Sephora skincare reviews; more sources can be appended side-by-side.
+
+Keys.
+
+cosmetiq_review_id – global join key (from review_map).
+
+cosmetiq_product_id – links each review back to its SKU in products.
+
+
+## users – everything we know about the reviewer
+
+main.core – one row per review: basic demographics + high-level goals
+
+main.preferences – exploded list of what the reviewer likes / dislikes
+
+main.skin – baseline skin zones & concerns (before using the product)
+
+main.recipient – who the product was bought for (self, partner, gift …)
+
+recommendation.* – where / when / for whom the reviewer says the product is or isn’t suitable
+
+recommended_age, …_climates, …_locations, …_moments, …_seasons, …_skin, …_stance
+
+All tables carry cosmetiq_review_id so you can join straight back to the raw review, product and effect data.
 
 ────────────────────────────────────────
 4. BUSINESS OBJECTIVES YOU OPTIMISE FOR
