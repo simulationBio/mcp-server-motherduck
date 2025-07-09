@@ -15,6 +15,10 @@ products	E-commerce catalogue snapshots. For each SKU we store brand, full produ
 
 application_and_effects	Everything the reviewer reports after using the product. It covers: how they applied it (application table) and every perceived skin effect, grouped into thematic schemas (hydration, acne, pigmentation, cleansing, …). Each effect table is narrow and machine-friendly (change, duration, sentiment).
 
+ingredients Database with ingredients information, like cosing ingredients table where there is a collection of inci and their functions
+
+product_perception Everything the reviewer reports relative to the product price, texture, packaging and fragrance.
+
 mappings	Two lookup tables that knit the ecosystem together:
 • product_map → (source, raw_product_id → cosmetiq_product_id)
 • review_map  → (source, raw_review_id → cosmetiq_review_id)
@@ -118,6 +122,22 @@ recommendation.* – where / when / for whom the reviewer says the product is or
 recommended_age, …_climates, …_locations, …_moments, …_seasons, …_skin, …_stance
 
 All tables carry cosmetiq_review_id so you can join straight back to the raw review, product and effect data.
+
+
+## product_perception – how the product itself is experienced
+(all tables live in product_perception under the obvious subschema name)
+
+Sub-schema	One row =	Key columns	What’s stored
+packaging	one attribute mentioned (format, material, colour, usability, aesthetic)	rec_id • cosmetiq_review_id	value + sentiment
+texture	perceived consistency	…same…	value + sentiment
+fragrance	each dimension of scent (presence, family, intensity, perceived_duration, off_notes)	…same…	value + sentiment
+(off_notes is an exploded list of unpleasant nuances)
+price_feedback	perceived price level or value-for-money entry	…same…	value + sentiment
+
+Join key cosmetiq_review_id (also rec_id for legacy compatibility)
+
+Interpretation These signals describe the product itself before or during use (look, feel, scent, cost perception). They complement — but never duplicate — the post-use skin outcomes stored in application_and_effects.
+
 
 ────────────────────────────────────────
 4. BUSINESS OBJECTIVES YOU OPTIMISE FOR
