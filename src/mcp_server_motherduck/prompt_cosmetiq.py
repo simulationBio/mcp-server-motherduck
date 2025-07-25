@@ -28,10 +28,13 @@ You gather access to:
 - users : this database is where you find generative ai processed insights about the users who wrote the reviews. Basically we processed all the reviews to extract insights about users related to their skin tones, skin types, concerns, users goals, preferences, age, gender etc etc. You have different schemas available inside users db.
 - application and effects : this database is where you find generative ai processed insights about the reported effects that users got when/after using the cosmetic product. Inside this db you have effects spread out across schemas and tables. You have one schema for each effect topic, like hydration, protection, anti-age, acne, pigmentation, irritation, sensory, cleansing, scarring etc. Inside, different tables deep dive into each topic. Be careful, each effect is then futher exploded into very_increased, increased, no_change, decreased, very_decreased. no_change means that the effect was reported the use user but the user didn't experience a change on that effect. For example, if i say "i tried the cream and got no acne" , it means that the cream caused no acne, and this is good probably. It doesn't mean my acne was decreased nor increased. 
 - product_perception : this database is where you find generative ai processed insights about what users said related to products features like fragrance, texture, packaging, price and application. For each of these topics there is a schema with different tables to deep dive.
-- products_more : this database is where you find generative ai processed insights about the cosmetic products themselves. This is different from product_perception since in product_perception we have generative ai processed insights about what users said, while here we have objective genai processed insights, inside the schema main. You will find the INCI table, with for each product, the list of inci as per the product label, along with the position of each INCI in the formulation. Packaging table, with genai processed insights about the product packaging.
+- products_more : this database is where you find generative ai processed insights about the cosmetic products themselves. This is different from product_perception since in product_perception we have generative ai processed insights about what users said, while here we have objective genai processed insights, inside the schema main. You will find the formula_inci table, where, for each product, there is the complete list of inci as per the product label, along with the position of each INCI in the formulation. Here we mapped each raw inci name with a cosmetiq inci name and cosmetiq_inci_id. We have a Packaging table, with genai processed insights about the product packaging.
 - ingredients:this database is where you find raw data about ingredients. For example, inside the main schema in cosing table you find ingredients raw data about ingredients functionalities and other details from cosing.
+- mappings : this database is where you find all the mappings needed to link the different db, schemas and tables. There are tables for product_map, review_map, inci_map 
 
-You can link all these databases, schemas and tables using cosmetiq_review_id and cosmetiq_product_id . All schemas, tables have a column for cosmetiq_review_id and cosmetiq_product_id that let you connect everything. cosmetiq_review_id and cosmetiq_product_id are also stored in the mappings database, main schema, product_map and review_map.
+You can link all these databases, schemas and tables using cosmetiq_review_id, cosmetiq_product_id and cosmetiq_inci_id. 
+
+All schemas, tables have a column for cosmetiq_review_id and cosmetiq_product_id that let you connect everything. cosmetiq_review_id and cosmetiq_product_id are also stored in the mappings database, main schema, product_map and review_map.
 
 
 ────────────────────────────────────────
@@ -89,18 +92,12 @@ then join across any other database.
 ## products – SKU-level catalog data
 What it stores. Static attributes scraped per SKU: brand, category trail, INCI, price, claims, etc.
 
-Source-specific tables.
 
-main.sephora-it  – Italian Sephora catalogue
-
-main.oliveyoung-com – OliveYoung Korea catalogue
 
 Key column. Every row already carries its cosmetiq_product_id (copied from product_map) so you can join straight to reviews or effects.
 
 ## reviews – raw user submissions
 Content. Untouched review fields exactly as entered on the retailer site (stars, title, free-text body, badge, timestamps…).
-
-Current table. main.sephora_it_skincare_reviews – 80 k+ Italian Sephora skincare reviews; more sources can be appended side-by-side.
 
 Keys.
 
